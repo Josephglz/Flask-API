@@ -24,16 +24,6 @@ def determineForecast(temp, hum, bright):
     df = pd.DataFrame(data)
     k = 5
     df.columns = ["temperature", "humidity", "brightness", "forecast"]
-    
-    # # Normalizacion de datos
-    # df['temperature'] = (df['temperature'] - df['temperature'].min()) / (df['temperature'].max() - df['temperature'].min())
-    # df['humidity'] = (df['humidity'] - df['humidity'].min()) / (df['humidity'].max() - df['humidity'].min())
-    # df['brightness'] = (df['brightness'] - df['brightness'].min()) / (df['brightness'].max() - df['brightness'].min())
-
-    # # Normalizar datos de entrada
-    # tempNorm = (temp - df['temperature'].min()) / (df['temperature'].max() - df['temperature'].min())
-    # humNorm = (hum - df['humidity'].min()) / (df['humidity'].max() - df['humidity'].min())
-    # brightNorm = (bright - df['brightness'].min()) / (df['brightness'].max() - df['brightness'].min())
 
     distances = []
 
@@ -45,26 +35,46 @@ def determineForecast(temp, hum, bright):
     df = df.sort_values(by='distance')
 
     forecast = df['forecast'][:k].mode()[0]
+    if forecast == 'Despejado':
+        forecast = 0
+    elif forecast == 'Soleado':
+        forecast = 1
+    elif forecast == 'Nublado':
+        forecast = 2
+    else:
+        forecast = 3
+
     return forecast
 
 
 @app.route("/weather", methods=["POST"])
 def addWeatherData():
+    print(request.json)
     try:
         cursor = conexion.connection.cursor()
         temp = request.json[0]
         hum = request.json[1]
         bright = request.json[2]
+        print(temp, hum, bright)
 
         forecast = determineForecast(temp, hum, bright)
-
-        sql = "INSERT INTO weather (temperature, humidity, brightness, forecast) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (temp, hum, bright, forecast))
+        strForecast = ""
+        if forecast == 0:
+            strForecast = "Despejado"
+        elif forecast == 1:
+            strForecast = "Soleado"
+        elif forecast == 2:
+            strForecast = "Nublado"
+        else:
+            strForecast = "Lluvioso"
+        sql = "INSERT INTO weather (temperature, humidity, brightness, forecast, created_at) VALUES (%s, %s, %s, %s, NOW())"
+        cursor.execute(sql, (temp, hum, bright, strForecast))
         conexion.connection.commit()
         cursor.close()
 
-        return forecast, 200
+        return "forecast:"+ str(forecast), 200
     except Exception as ex:
+        print(ex)
         return str(ex), 500
 
 def pageNotFound(error):

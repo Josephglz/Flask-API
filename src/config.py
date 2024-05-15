@@ -2,9 +2,8 @@ class DevelopmentConfig():
     DEBUG = True
     MYSQL_HOST = 'localhost'
     MYSQL_USER = 'root'
-    MYSQL_PASSWORD = ''
+    MYSQL_PASSWORD = '6KiacKB9O0zF'
     MYSQL_DB = 'arduino'
-
 
 config = {
     'development': DevelopmentConfig,
